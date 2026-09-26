@@ -1004,9 +1004,11 @@ void Screen::setup()
     if (inputBroker)
         inputObserver.observe(inputBroker);
 
+#if HAS_MESSAGE_STORE
     // Load persisted messages into RAM
     messageStore.loadFromFlash();
     LOG_INFO("MessageStore loaded from flash");
+#endif
 
     // Notify modules that support UI events
     MeshModule::observeUIEvents(&uiFrameEventObserver);

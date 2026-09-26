@@ -1,6 +1,6 @@
 #pragma once
 
-#if HAS_SCREEN || defined(MESHTASTIC_INCLUDE_NICHE_GRAPHICS)
+#if HAS_MESSAGE_STORE
 
 // Disable debug logging entirely on release builds of HELTEC_MESH_SOLAR for space constraints
 #if defined(HELTEC_MESH_SOLAR)
@@ -13,22 +13,37 @@
 #define ENABLE_MESSAGE_PERSISTENCE 1
 #endif
 
+#include "memory/MemClass.h"
 #include "mesh/generated/meshtastic/mesh.pb.h"
 #include <cstdint>
 #include <deque>
 #include <string>
 
-// How many messages are stored (RAM + flash).
-// Define -DMESSAGE_HISTORY_LIMIT=N in build_flags to control memory usage.
+// How many messages are stored (RAM + flash), keyed off the shared MemClass.h tier ladder that
+// WARM_NODE_COUNT and TRAFFIC_MANAGEMENT_CACHE_SIZE already use (mesh-pb-constants.h), with the
+// same per-chip "class-deviant" exceptions those two make. Define -DMESSAGE_HISTORY_LIMIT=N in
+// build_flags to override.
 #ifndef MESSAGE_HISTORY_LIMIT
-#if (defined(ARCH_ESP32) &&                                                                                                      \
-     !(defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32S3) || defined(CONFIG_IDF_TARGET_ESP32S2))) ||       \
-    defined(NRF52840_XXAA)
-// Baseline ESP32 (non-PSRAM variants) and nRF52840 (~115 KB heap arena shared with SoftDevice +
-// FreeRTOS stacks; 2.8.0 field reports hit 99% use) have limited heap; reduce message history on
-// resource-constrained builds. Override with -DMESSAGE_HISTORY_LIMIT=N if needed.
+#if MESHTASTIC_MEM_CLASS <= MEM_CLASS_TINY
+// STM32WL: a small floor rather than 0 - the ring-buffer push/pop below assumes a nonzero
+// capacity. The old ad hoc check never singled this class out and gave it 20, unchecked against
+// its <32 KB free heap.
+#define MESSAGE_HISTORY_LIMIT 5
+#elif defined(NRF52840_XXAA) ||                                                                                                  \
+    (defined(ARCH_ESP32) &&                                                                                                      \
+     !(defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32S3) || defined(CONFIG_IDF_TARGET_ESP32S2)))
+// Class-deviant within SMALL: nRF52840 (~115 KB heap arena shared with SoftDevice + FreeRTOS
+// stacks; 2.8.0 field reports hit 99% use) and baseline ESP32 (non-PSRAM variants) are tighter
+// than the rest of this tier.
 #define MESSAGE_HISTORY_LIMIT 10
+#elif MESHTASTIC_MEM_CLASS == MEM_CLASS_MEDIUM
+#define MESSAGE_HISTORY_LIMIT 20
+#elif MESHTASTIC_MEM_CLASS >= MEM_CLASS_LARGE
+// PSRAM-equipped ESP32-S3 / native host. Text pool cost is MAX_MESSAGES_SAVED * MAX_MESSAGE_SIZE
+// bytes (220 B/message), trivial at this tier.
+#define MESSAGE_HISTORY_LIMIT 50
 #else
+// Rest of MEM_CLASS_SMALL (ESP32-S2/C3, RP2040/RP2350) and anything unclassified.
 #define MESSAGE_HISTORY_LIMIT 20
 #endif
 #endif

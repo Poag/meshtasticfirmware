@@ -643,6 +643,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define HAS_SCREEN 0
 #endif
 
+// Persistent text-message history (MessageStore). Defaults to following the screen, since that's
+// its only consumer today, but a screenless variant.h may set -DHAS_MESSAGE_STORE=1 to persist
+// history for phone-side consumption without pulling in any screen code.
+#ifndef HAS_MESSAGE_STORE
+#define HAS_MESSAGE_STORE (HAS_SCREEN || defined(MESHTASTIC_INCLUDE_NICHE_GRAPHICS))
+#endif
+
 // -----------------------------------------------------------------------------
 // Motion sensor wake
 // -----------------------------------------------------------------------------

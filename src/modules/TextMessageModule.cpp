@@ -22,19 +22,21 @@ ProcessMessage TextMessageModule::handleReceived(const meshtastic_MeshPacket &mp
     textPacketList[textPacketListIndex] = mp.id;
     textPacketListIndex = (textPacketListIndex + 1) % TEXT_PACKET_LIST_SIZE;
 
-    IF_SCREEN(
-        // Guard against running in MeshtasticUI or with no screen
-        if (config.display.displaymode != meshtastic_Config_DisplayConfig_DisplayMode_COLOR) {
-            // Store in the central message history
-            const StoredMessage *sm = messageStore.tryAddFromPacket(mp);
-            if (!sm)
-                return ProcessMessage::CONTINUE;
-
-            // Pass message to renderer (banner + thread switching + scroll reset)
-            // Use the global Screen singleton to retrieve the current OLED display
-            auto *display = screen ? screen->getDisplayDevice() : nullptr;
-            graphics::MessageRenderer::handleNewMessage(display, *sm, mp);
-        })
+#if HAS_MESSAGE_STORE
+    // Guard against running in MeshtasticUI, which keeps its own history
+    if (config.display.displaymode != meshtastic_Config_DisplayConfig_DisplayMode_COLOR) {
+        // Store in the central message history (independent of whether this build has a screen)
+        const StoredMessage *sm = messageStore.tryAddFromPacket(mp);
+        IF_SCREEN(if (!sm) return ProcessMessage::CONTINUE;
+                  // Pass message to renderer (banner + thread switching + scroll reset)
+                  // Use the global Screen singleton to retrieve the current OLED display
+                  auto *display = screen ? screen->getDisplayDevice() : nullptr;
+                  graphics::MessageRenderer::handleNewMessage(display, *sm, mp);)
+#if !HAS_SCREEN
+        (void)sm;
+#endif
+    }
+#endif
     // Only trigger screen wake if configuration allows it and the channel/sender isn't muted.
     // An alert breaks through the mute: in COLOR display mode handleNewMessage() above never runs,
     // so this trigger is the only wake an alert would get.

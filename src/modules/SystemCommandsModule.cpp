@@ -78,7 +78,7 @@ int SystemCommandsModule::handleInputEvent(const InputEvent *event)
     case INPUT_BROKER_MSG_REBOOT:
         IF_SCREEN(screen->showSimpleBanner("Rebooting...", 0));
         nodeDB->saveToDisk();
-#if HAS_SCREEN
+#if HAS_MESSAGE_STORE
         messageStore.saveToFlash();
 #endif
         rebootAtMsec = Time::timerEndsAtMillis(DEFAULT_REBOOT_SECONDS * 1000);

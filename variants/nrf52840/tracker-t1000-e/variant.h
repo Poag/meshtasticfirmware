@@ -154,6 +154,11 @@ extern "C" {
 
 #define HAS_SCREEN 0
 
+// No screen, so history only ever existed in the small in-RAM ToPhone BLE queue (evicted
+// oldest-first, lost on reboot). Persist it instead, queryable by the phone once an AdminMessage
+// history request exists (see meshtastic/rfcs PR 12 for the precedent this would follow).
+#define HAS_MESSAGE_STORE 1
+
 #ifdef __cplusplus
 }
 #endif

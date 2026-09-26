@@ -1154,6 +1154,11 @@ void setup()
         screen->setup();
 #endif
 #endif
+#if HAS_MESSAGE_STORE && !HAS_SCREEN
+    // Screen::setup() (above, when present) already loads MessageStore itself. Boards that opt
+    // into HAS_MESSAGE_STORE without a screen have no other boot hook, so load it here instead.
+    messageStore.loadFromFlash();
+#endif
 
 #if defined(SENSECAP_INDICATOR)
     // The ST7701 panel shares SCK/MOSI/MISO (41/48/47) with the SX1262, and its host is SPI2_HOST,
@@ -1561,7 +1566,7 @@ void loop()
     }
 #endif
 #endif
-#if (HAS_SCREEN || defined(MESHTASTIC_INCLUDE_NICHE_GRAPHICS)) && ENABLE_MESSAGE_PERSISTENCE
+#if HAS_MESSAGE_STORE && ENABLE_MESSAGE_PERSISTENCE
     messageStoreAutosaveTick();
 #endif
 #if !MESHTASTIC_EXCLUDE_WAYPOINT

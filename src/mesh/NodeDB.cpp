@@ -911,7 +911,7 @@ bool NodeDB::factoryReset(bool eraseBleBonds)
     if (transmitHistory) {
         transmitHistory->clear();
     }
-#if HAS_SCREEN
+#if HAS_MESSAGE_STORE
     messageStore.clearAllMessages();
 #endif
 #if HAS_SCREEN && !MESHTASTIC_EXCLUDE_WAYPOINT
@@ -3748,7 +3748,7 @@ void NodeDB::addFromContact(meshtastic_SharedContact contact)
             LOG_WARN(PROTECTED_CAP_WARN_FMT, "ignore", contact.node_num, MAX_NUM_NODES - 2);
         nodeInfoLiteSetBit(info, NODEINFO_BITFIELD_IS_FAVORITE_MASK, false);
         eraseNodeSatellites(contact.node_num);
-#if HAS_SCREEN || defined(MESHTASTIC_INCLUDE_NICHE_GRAPHICS)
+#if HAS_MESSAGE_STORE
         messageStore.deleteAllMessagesFromNode(contact.node_num);
 #endif
     } else {

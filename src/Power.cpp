@@ -1094,7 +1094,7 @@ void Power::shutdown()
     playShutdownMelody();
 #endif
     nodeDB->saveToDisk();
-#if HAS_SCREEN
+#if HAS_MESSAGE_STORE
     messageStore.saveToFlash();
 #endif
 #if !MESHTASTIC_EXCLUDE_WAYPOINT
