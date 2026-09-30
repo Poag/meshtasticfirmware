@@ -6,6 +6,7 @@
 #include "GPS.h"
 #endif
 #include "MeshService.h"
+#include "NodeDB.h"
 #include "Power.h"
 #include "RadioLibInterface.h"
 #include "buzz.h"
@@ -248,6 +249,12 @@ int32_t ButtonThread::runOnce()
 
             switch (multipressClickCount) {
             case 3:
+                // config.device.disable_triple_click (issue 7967): honor it here, at the physical
+                // triple-press itself, rather than in the shared GPS-toggle handler - that handler
+                // is also reached by non-button sources (keyboard fn+g, INPUT_BROKER_PRIVACY_TOGGLE),
+                // which must keep working regardless of this setting.
+                if (config.device.disable_triple_click)
+                    break;
                 evt.inputEvent = _triplePress;
                 // evt.kbchar = _triplePress;
                 this->notifyObservers(&evt);
